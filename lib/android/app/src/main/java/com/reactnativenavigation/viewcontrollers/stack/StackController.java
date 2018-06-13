@@ -1,8 +1,9 @@
-package com.reactnativenavigation.viewcontrollers;
+package com.reactnativenavigation.viewcontrollers.stack;
 
 import android.app.Activity;
 import android.support.annotation.NonNull;
 import android.support.annotation.RestrictTo;
+import android.support.annotation.VisibleForTesting;
 import android.support.v4.view.ViewPager;
 
 import com.reactnativenavigation.anim.NavigationAnimator;
@@ -12,6 +13,11 @@ import com.reactnativenavigation.presentation.OptionsPresenter;
 import com.reactnativenavigation.react.Constants;
 import com.reactnativenavigation.utils.CommandListener;
 import com.reactnativenavigation.utils.CommandListenerAdapter;
+import com.reactnativenavigation.viewcontrollers.ChildControllersRegistry;
+import com.reactnativenavigation.viewcontrollers.IdStack;
+import com.reactnativenavigation.viewcontrollers.ParentController;
+import com.reactnativenavigation.viewcontrollers.ReactViewCreator;
+import com.reactnativenavigation.viewcontrollers.ViewController;
 import com.reactnativenavigation.viewcontrollers.topbar.TopBarBackgroundViewController;
 import com.reactnativenavigation.viewcontrollers.topbar.TopBarController;
 import com.reactnativenavigation.views.Component;
@@ -94,7 +100,7 @@ public class StackController extends ParentController<StackLayout> {
     }
 
     @Override
-    void clearOptions() {
+    public void clearOptions() {
         super.clearOptions();
         topBarController.clear();
     }
@@ -150,7 +156,7 @@ public class StackController extends ParentController<StackLayout> {
         }
     }
 
-    void pop(CommandListener listener) {
+    public void pop(CommandListener listener) {
         if (!canPop()) {
             listener.onError("Nothing to pop");
             return;
@@ -176,7 +182,7 @@ public class StackController extends ParentController<StackLayout> {
         listener.onSuccess(disappearing.getId());
     }
 
-    void popSpecific(ViewController childController, CommandListener listener) {
+    public void popSpecific(ViewController childController, CommandListener listener) {
         if (stack.isTop(childController.getId())) {
             pop(listener);
         } else {
@@ -185,7 +191,7 @@ public class StackController extends ParentController<StackLayout> {
         }
     }
 
-    void popTo(final ViewController viewController, CommandListener listener) {
+    public void popTo(final ViewController viewController, CommandListener listener) {
         if (!stack.containsId(viewController.getId())) {
             listener.onError("Nothing to pop");
             return;
@@ -205,7 +211,7 @@ public class StackController extends ParentController<StackLayout> {
         pop(listener);
     }
 
-    void popToRoot(CommandListener listener) {
+    public void popToRoot(CommandListener listener) {
         if (!canPop()) {
             listener.onError("Nothing to pop");
             return;
@@ -227,7 +233,7 @@ public class StackController extends ParentController<StackLayout> {
         controller.destroy();
     }
 
-    ViewController peek() {
+    public ViewController peek() {
         return stack.peek();
     }
 
@@ -248,7 +254,8 @@ public class StackController extends ParentController<StackLayout> {
         return false;
     }
 
-    boolean canPop() {
+    @VisibleForTesting()
+    public boolean canPop() {
         return stack.size() > 1;
     }
 
@@ -295,12 +302,12 @@ public class StackController extends ParentController<StackLayout> {
     }
 
     @RestrictTo(RestrictTo.Scope.TESTS)
-    TopBar getTopBar() {
+    public TopBar getTopBar() {
         return topBarController.getView();
     }
 
     @RestrictTo(RestrictTo.Scope.TESTS)
-    StackLayout getStackLayout() {
+    public StackLayout getStackLayout() {
         return getView();
     }
 }

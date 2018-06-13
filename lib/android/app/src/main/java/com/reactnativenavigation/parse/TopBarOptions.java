@@ -64,6 +64,7 @@ public class TopBarOptions {
     public Fraction elevation = new NullFraction();
     public Fraction borderHeight = new NullFraction();
     public Color borderColor = new NullColor();
+    public BackButtonOptions backButton = new BackButtonOptions();
     @Nullable public ArrayList<Button> leftButtons;
     @Nullable public ArrayList<Button> rightButtons;
 
@@ -71,6 +72,7 @@ public class TopBarOptions {
         title.mergeWith(other.title);
         subtitle.mergeWith(other.subtitle);
         background.mergeWith(other.background);
+        backButton.mergeWith(other.backButton);
         if (other.testId.hasValue()) testId = other.testId;
         if (other.visible.hasValue()) visible = other.visible;
         if (other.animate.hasValue()) animate = other.animate;
@@ -89,6 +91,7 @@ public class TopBarOptions {
         title.mergeWithDefault(defaultOptions.title);
         subtitle.mergeWithDefault(defaultOptions.subtitle);
         background.mergeWithDefault(defaultOptions.background);
+        backButton.mergeWithDefault(defaultOptions.backButton);
         if (!visible.hasValue()) visible = defaultOptions.visible;
         if (!animate.hasValue()) animate = defaultOptions.animate;
         if (!hideOnScroll.hasValue()) hideOnScroll = defaultOptions.hideOnScroll;

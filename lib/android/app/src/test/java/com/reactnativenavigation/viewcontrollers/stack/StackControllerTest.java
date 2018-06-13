@@ -1,4 +1,4 @@
-package com.reactnativenavigation.viewcontrollers;
+package com.reactnativenavigation.viewcontrollers.stack;
 
 import android.app.Activity;
 import android.content.Context;
@@ -17,6 +17,11 @@ import com.reactnativenavigation.parse.params.Button;
 import com.reactnativenavigation.parse.params.Text;
 import com.reactnativenavigation.utils.CommandListenerAdapter;
 import com.reactnativenavigation.utils.ViewHelper;
+import com.reactnativenavigation.viewcontrollers.ChildControllersRegistry;
+import com.reactnativenavigation.viewcontrollers.ParentController;
+import com.reactnativenavigation.viewcontrollers.ReactViewCreator;
+import com.reactnativenavigation.viewcontrollers.TopBarButtonController;
+import com.reactnativenavigation.viewcontrollers.ViewController;
 import com.reactnativenavigation.viewcontrollers.topbar.TopBarBackgroundViewController;
 import com.reactnativenavigation.viewcontrollers.topbar.TopBarController;
 import com.reactnativenavigation.views.Component;
@@ -745,6 +750,12 @@ public class StackControllerTest extends BaseTest {
         uut.ensureViewIsCreated();
         uut.destroy();
         verify(topBarController, times(1)).clear();
+    }
+
+    @Test
+    public void addBackButton_addedIfStackContainsMoreThenOneChild() {
+//        if (size() <= 1 || child.options.topBar.leftButtons != null) return;
+
     }
 
     private void assertContainsOnlyId(String... ids) {
