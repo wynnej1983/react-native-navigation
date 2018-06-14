@@ -66,7 +66,7 @@ public class StackControllerBuilder {
         return this;
     }
 
-    public StackController createStackController() {
+    public StackController build() {
         return new StackController(activity, childRegistry, topBarButtonCreator, titleBarReactViewCreator, topBarBackgroundViewController, topBarController, animator, id, initialOptions);
     }
 }

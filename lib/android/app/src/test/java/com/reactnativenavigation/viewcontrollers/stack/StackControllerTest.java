@@ -5,6 +5,7 @@ import android.content.Context;
 import android.view.View;
 
 import com.reactnativenavigation.BaseTest;
+import com.reactnativenavigation.TestUtils;
 import com.reactnativenavigation.anim.NavigationAnimator;
 import com.reactnativenavigation.mocks.SimpleViewController;
 import com.reactnativenavigation.mocks.TitleBarReactViewCreatorMock;
@@ -189,7 +190,7 @@ public class StackControllerTest extends BaseTest {
                         .setTopBarController(new TopBarController())
                         .setId("uut")
                         .setInitialOptions(new Options())
-                        .createStackController();
+                        .build();
         uut.push(child1, new CommandListenerAdapter());
         uut.push(child2, new CommandListenerAdapter() {
             @Override
@@ -685,7 +686,7 @@ public class StackControllerTest extends BaseTest {
                         .setTopBarController(new TopBarController())
                         .setId("stack")
                         .setInitialOptions(new Options())
-                        .createStackController());
+                        .build());
         Options optionsToMerge = new Options();
         Component component = mock(Component.class);
         uut.mergeChildOptions(optionsToMerge, component);
@@ -701,7 +702,7 @@ public class StackControllerTest extends BaseTest {
                         .setTopBarController(new TopBarController())
                         .setId("stack")
                         .setInitialOptions(new Options())
-                        .createStackController();
+                        .build();
         ParentController parentController = Mockito.mock(ParentController.class);
         uut.setParentController(parentController);
         Options optionsToMerge = new Options();
@@ -764,21 +765,17 @@ public class StackControllerTest extends BaseTest {
     }
 
     private StackController createStackController() {
-        return createStackController("stackId");
+        return createStackController("stack");
     }
 
     private StackController createStackController(String id) {
         createTopBarController();
-        return new StackControllerBuilder(activity)
-                .setChildRegistry(childRegistry)
-                .setTopBarButtonCreator(new TopBarButtonCreatorMock())
-                .setTitleBarReactViewCreator(new TitleBarReactViewCreatorMock())
-                .setTopBarBackgroundViewController(new TopBarBackgroundViewController(activity, new TopBarBackgroundViewCreatorMock()))
-                .setTopBarController(topBarController)
-                .setAnimator(animator)
+        return TestUtils.newStackController(activity)
                 .setId(id)
-                .setInitialOptions(new Options())
-                .createStackController();
+                .setTopBarController(topBarController)
+                .setChildRegistry(childRegistry)
+                .setAnimator(animator)
+                .build();
     }
 
     private void createTopBarController() {

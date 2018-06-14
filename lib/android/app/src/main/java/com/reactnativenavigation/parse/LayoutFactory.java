@@ -161,7 +161,7 @@ public class LayoutFactory {
                 .setTopBarController(new TopBarController())
                 .setId(node.id)
                 .setInitialOptions(parseNodeOptions(node))
-                .createStackController();
+                .build();
         addChildrenToStack(node.children, stackController);
         return stackController;
 	}
