@@ -8,7 +8,6 @@ import android.support.v4.view.ViewPager;
 
 import com.reactnativenavigation.anim.NavigationAnimator;
 import com.reactnativenavigation.parse.Options;
-import com.reactnativenavigation.parse.params.Button;
 import com.reactnativenavigation.presentation.OptionsPresenter;
 import com.reactnativenavigation.react.Constants;
 import com.reactnativenavigation.utils.CommandListener;
@@ -26,9 +25,7 @@ import com.reactnativenavigation.views.StackLayout;
 import com.reactnativenavigation.views.titlebar.TitleBarReactViewCreator;
 import com.reactnativenavigation.views.topbar.TopBar;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
 
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
@@ -41,14 +38,16 @@ public class StackController extends ParentController<StackLayout> {
     private final TitleBarReactViewCreator titleBarReactViewCreator;
     private TopBarBackgroundViewController topBarBackgroundViewController;
     private TopBarController topBarController;
+    private BackButtonHelper backButtonHelper;
 
-    public StackController(Activity activity, ChildControllersRegistry childRegistry, ReactViewCreator topBarButtonCreator, TitleBarReactViewCreator titleBarReactViewCreator, TopBarBackgroundViewController topBarBackgroundViewController, TopBarController topBarController, NavigationAnimator animator, String id, Options initialOptions) {
+    public StackController(Activity activity, ChildControllersRegistry childRegistry, ReactViewCreator topBarButtonCreator, TitleBarReactViewCreator titleBarReactViewCreator, TopBarBackgroundViewController topBarBackgroundViewController, TopBarController topBarController, NavigationAnimator animator, String id, Options initialOptions, BackButtonHelper backButtonHelper) {
         super(activity, childRegistry, id, new OptionsPresenter(activity), initialOptions);
         this.topBarController = topBarController;
         this.topBarButtonCreator = topBarButtonCreator;
         this.titleBarReactViewCreator = titleBarReactViewCreator;
         this.topBarBackgroundViewController = topBarBackgroundViewController;
         this.animator = animator;
+        this.backButtonHelper = backButtonHelper;
     }
 
     @Override
@@ -128,12 +127,7 @@ public class StackController extends ParentController<StackLayout> {
     }
 
     private void addBackButton(ViewController child) {
-        if (size() <= 1 || child.options.topBar.leftButtons != null) return;
-        Options options = new Options();
-        Button back = new Button();
-        back.id = Constants.BACK_BUTTON_ID;
-        options.topBar.leftButtons = new ArrayList<>(Collections.singleton(back));
-        child.mergeOptions(options);
+        backButtonHelper.addToChild(this, child);
     }
 
     public void setRoot(ViewController child, CommandListener listener) {

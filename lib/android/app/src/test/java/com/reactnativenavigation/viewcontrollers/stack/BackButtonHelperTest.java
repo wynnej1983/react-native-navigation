@@ -1,19 +1,75 @@
 package com.reactnativenavigation.viewcontrollers.stack;
 
+import android.app.Activity;
+
 import com.reactnativenavigation.BaseTest;
+import com.reactnativenavigation.TestUtils;
+import com.reactnativenavigation.mocks.SimpleViewController;
+import com.reactnativenavigation.parse.Options;
+import com.reactnativenavigation.parse.params.Button;
+import com.reactnativenavigation.react.Constants;
+import com.reactnativenavigation.utils.CommandListenerAdapter;
+import com.reactnativenavigation.viewcontrollers.ChildController;
+import com.reactnativenavigation.viewcontrollers.ChildControllersRegistry;
 
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
+
+import java.util.ArrayList;
+
+import static org.assertj.core.api.Java6Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 
 public class BackButtonHelperTest extends BaseTest {
-    private BackButtonHelperTest uut;
+    private BackButtonHelper uut;
+    private StackController stack;
+    private ChildController child1;
+    private ChildController child2;
 
     @Override
     public void beforeEach() {
-        uut = new BackButtonHelperTest();
+        uut = new BackButtonHelper();
+        Activity activity = newActivity();
+        ChildControllersRegistry childRegistry = new ChildControllersRegistry();
+        stack = TestUtils.newStackController(activity)
+                .setChildRegistry(childRegistry)
+                .setBackButtonHelper(uut)
+                .build();
+        child1 = spy(new SimpleViewController(activity, childRegistry, "child1", new Options()));
+        child2 = spy(new SimpleViewController(activity, childRegistry, "child2", new Options()));
     }
 
     @Test
     public void addToChild_doesNotAddIfStackContainsOneChild() {
+        uut.addToChild(stack, child1);
+        Mockito.verify(child1, times(0)).mergeOptions(any());
+    }
 
+    @Test
+    public void addToChild_doesNotAddIfChildContainsBackButton() {
+        disablePushAnimation(child1, child2);
+        stack.push(child1, new CommandListenerAdapter());
+
+        child2.options.topBar.leftButtons = new ArrayList<>();
+        child2.options.topBar.leftButtons.add(new Button());
+        stack.push(child2, new CommandListenerAdapter());
+
+        Mockito.verify(child2, times(0)).mergeOptions(any());
+    }
+
+    @Test
+    public void addToChild_addsIfStackContainsMoreThenOneChild() {
+        disablePushAnimation(child1, child2);
+        stack.push(child1, new CommandListenerAdapter());
+        stack.push(child2, new CommandListenerAdapter());
+
+        ArgumentCaptor<Options> optionWithBackButton = ArgumentCaptor.forClass(Options.class);
+        Mockito.verify(child2, times(1)).mergeOptions(optionWithBackButton.capture());
+        assertThat(optionWithBackButton.getValue().topBar.leftButtons).isNotNull();
+        assertThat(optionWithBackButton.getValue().topBar.leftButtons.size()).isOne();
+        assertThat(optionWithBackButton.getValue().topBar.leftButtons.get(0).id).isEqualTo(Constants.BACK_BUTTON_ID);
     }
 }

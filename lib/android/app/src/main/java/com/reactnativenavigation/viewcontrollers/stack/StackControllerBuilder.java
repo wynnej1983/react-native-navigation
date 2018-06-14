@@ -20,6 +20,7 @@ public class StackControllerBuilder {
     private String id;
     private Options initialOptions = new Options();
     private NavigationAnimator animator;
+    private BackButtonHelper backButtonHelper = new BackButtonHelper();
 
     public StackControllerBuilder(Activity activity) {
         this.activity = activity;
@@ -66,7 +67,12 @@ public class StackControllerBuilder {
         return this;
     }
 
+    public StackControllerBuilder setBackButtonHelper(BackButtonHelper backButtonHelper) {
+        this.backButtonHelper = backButtonHelper;
+        return this;
+    }
+
     public StackController build() {
-        return new StackController(activity, childRegistry, topBarButtonCreator, titleBarReactViewCreator, topBarBackgroundViewController, topBarController, animator, id, initialOptions);
+        return new StackController(activity, childRegistry, topBarButtonCreator, titleBarReactViewCreator, topBarBackgroundViewController, topBarController, animator, id, initialOptions, backButtonHelper);
     }
 }
