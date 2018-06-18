@@ -27,9 +27,9 @@ static NSString* const setDefaultOptions	= @"setDefaultOptions";
 @implementation RNNCommandsHandler {
 	RNNControllerFactory *_controllerFactory;
 	RNNStore *_store;
-	RNNNavigationStackManager* _navigationStackManager;
 	RNNModalManager* _modalManager;
 	RNNOverlayManager* _overlayManager;
+	RNNNavigationStackManager* _stackManager;
 	RNNEventEmitter* _eventEmitter;
 }
 
@@ -38,8 +38,8 @@ static NSString* const setDefaultOptions	= @"setDefaultOptions";
 	_store = store;
 	_controllerFactory = controllerFactory;
 	_eventEmitter = eventEmitter;
-	_navigationStackManager = [[RNNNavigationStackManager alloc] initWithStore:_store];
 	_modalManager = [[RNNModalManager alloc] initWithStore:_store];
+	_stackManager = [[RNNNavigationStackManager alloc] init];
 	_overlayManager = [[RNNOverlayManager alloc] initWithStore:_store];
 	return self;
 }
@@ -56,6 +56,7 @@ static NSString* const setDefaultOptions	= @"setDefaultOptions";
 	
 	UIApplication.sharedApplication.delegate.window.rootViewController = vc;
 	[UIApplication.sharedApplication.delegate.window makeKeyAndVisible];
+	[_eventEmitter sendOnNavigationCommandCompletion:setRoot params:@{@"layout": layout}];
 	completion();
 }
 
@@ -97,8 +98,9 @@ static NSString* const setDefaultOptions	= @"setDefaultOptions";
 -(void)push:(NSString*)componentId layout:(NSDictionary*)layout completion:(RNNTransitionCompletionBlock)completion rejection:(RCTPromiseRejectBlock)rejection {
 	[self assertReady];
 
-	UIViewController<RNNRootViewProtocol, UIViewControllerPreviewingDelegate> *newVc = [_controllerFactory createLayoutAndSaveToStore:layout];
-
+	RNNRootViewController *newVc = (RNNRootViewController *)[_controllerFactory createLayoutAndSaveToStore:layout];
+	UIViewController *fromVC = [_store findComponentForId:componentId];
+	
 	if (newVc.options.preview.elementId) {
 		UIViewController* vc = [_store findComponentForId:componentId];
 
@@ -126,82 +128,103 @@ static NSString* const setDefaultOptions	= @"setDefaultOptions";
 			[rootVc registerForPreviewingWithDelegate:(id)rootVc sourceView:elementView];
 		}
 	} else {
-		[_eventEmitter sendOnNavigationCommand:push params:@{@"componentId": componentId}];
-		[_navigationStackManager push:newVc onTop:componentId completion:^{
-			completion();
-		} rejection:rejection];
+		[newVc onReactViewReady:^{
+			id animationDelegate = (newVc.options.animations.push.hasCustomAnimation || newVc.isCustomTransitioned) ? newVc : nil;
+			[_stackManager push:newVc onTop:fromVC animated:newVc.options.animations.push.enable animationDelegate:animationDelegate completion:^{
+				[_eventEmitter sendOnNavigationCommandCompletion:push params:@{@"componentId": componentId}];
+				completion();
+			} rejection:rejection];
+		}];
 	}
 }
 
 -(void)setStackRoot:(NSString*)componentId layout:(NSDictionary*)layout completion:(RNNTransitionCompletionBlock)completion rejection:(RCTPromiseRejectBlock)rejection {
 	[self assertReady];
-	[_eventEmitter sendOnNavigationCommand:setStackRoot params:@{@"componentId": componentId}];
 	
-	UIViewController<RNNRootViewProtocol> *newVc = [_controllerFactory createLayoutAndSaveToStore:layout];
-	[_navigationStackManager setStackRoot:newVc fromComponent:componentId completion:^{
+	UIViewController<RNNRootViewProtocol> *newVC = [_controllerFactory createLayoutAndSaveToStore:layout];
+	UIViewController *fromVC = [_store findComponentForId:componentId];
+	__weak typeof(RNNEventEmitter*) weakEventEmitter = _eventEmitter;
+	[_stackManager setStackRoot:newVC fromViewController:fromVC animated:newVC.options.animations.push.enable completion:^{
+		[weakEventEmitter sendOnNavigationCommandCompletion:setStackRoot params:@{@"componentId": componentId}];
 		completion();
 	} rejection:rejection];
 }
 
 -(void)pop:(NSString*)componentId options:(NSDictionary*)options completion:(RNNTransitionCompletionBlock)completion rejection:(RCTPromiseRejectBlock)rejection {
 	[self assertReady];
-	[_eventEmitter sendOnNavigationCommand:pop params:@{@"componentId": componentId}];
-	[CATransaction begin];
-	[CATransaction setCompletionBlock:^{
-		completion();
-	}];
-	
-	NSDictionary* animationData = options[@"customTransition"];
-	RNNAnimationOptions* transitionOptions = [[RNNAnimationOptions alloc] initWithDict:animationData];
-	
-	if (transitionOptions.animations){
-		[_navigationStackManager pop:componentId withTransitionOptions:transitionOptions rejection:rejection];
+
+	RNNRootViewController *vc = (RNNRootViewController*)[_store findComponentForId:componentId];
+	UINavigationController *nvc = vc.navigationController;
+
+	if ([nvc topViewController] == vc) {
+		if (vc.options.animations.pop) {
+			nvc.delegate = vc;
+		} else {
+			nvc.delegate = nil;
+		}
 	} else {
-		[_navigationStackManager pop:componentId withTransitionOptions:nil rejection:rejection];
+		NSMutableArray * vcs = nvc.viewControllers.mutableCopy;
+		[vcs removeObject:vc];
+		[nvc setViewControllers:vcs animated:vc.options.animations.pop.enable];
 	}
-	[CATransaction commit];
+	
+	[_stackManager pop:vc animated:vc.options.animations.pop.enable completion:^{
+		[_store removeComponent:componentId];
+		[_eventEmitter sendOnNavigationCommandCompletion:pop params:@{@"componentId": componentId}];
+		completion();
+	} rejection:^(NSString *code, NSString *message, NSError *error) {
+		
+	}];
 }
 
 -(void) popTo:(NSString*)componentId completion:(RNNTransitionCompletionBlock)completion rejection:(RCTPromiseRejectBlock)rejection {
 	[self assertReady];
-	[_eventEmitter sendOnNavigationCommand:popTo params:@{@"componentId": componentId}];
-	[CATransaction begin];
-	[CATransaction setCompletionBlock:^{
+	RNNRootViewController *vc = (RNNRootViewController*)[_store findComponentForId:componentId];
+
+	[_stackManager popTo:vc animated:vc.options.animations.pop.enable completion:^(NSArray *poppedViewControllers) {
+		[_eventEmitter sendOnNavigationCommandCompletion:popTo params:@{@"componentId": componentId}];
+		[self removePopedViewControllers:poppedViewControllers];
 		completion();
+	} rejection:^(NSString *code, NSString *message, NSError *error) {
+		
 	}];
-	
-	[_navigationStackManager popTo:componentId rejection:rejection];
-	
-	[CATransaction commit];
 }
 
 -(void) popToRoot:(NSString*)componentId completion:(RNNTransitionCompletionBlock)completion rejection:(RCTPromiseRejectBlock)rejection {
 	[self assertReady];
-	[_eventEmitter sendOnNavigationCommand:popToRoot params:@{@"componentId": componentId}];
+	RNNRootViewController *newVc = (RNNRootViewController*)[_store findComponentForId:componentId];
+
 	[CATransaction begin];
 	[CATransaction setCompletionBlock:^{
+		[_eventEmitter sendOnNavigationCommandCompletion:popToRoot params:@{@"componentId": componentId}];
 		completion();
 	}];
 	
-	[_navigationStackManager popToRoot:componentId rejection:rejection];
+	[_stackManager popToRoot:newVc animated:newVc.options.animations.pop.enable completion:^(NSArray *poppedViewControllers) {
+		[self removePopedViewControllers:poppedViewControllers];
+	} rejection:^(NSString *code, NSString *message, NSError *error) {
+		
+	}];
 	
 	[CATransaction commit];
 }
 
 -(void) showModal:(NSDictionary*)layout completion:(RNNTransitionCompletionBlock)completion {
 	[self assertReady];
-	[_eventEmitter sendOnNavigationCommand:showModal params:@{@"layout": layout}];
+
 	UIViewController<RNNRootViewProtocol> *newVc = [_controllerFactory createLayoutAndSaveToStore:layout];
 	[_modalManager showModal:newVc completion:^{
+		[_eventEmitter sendOnNavigationCommandCompletion:showModal params:@{@"layout": layout}];
 		completion();
 	}];
 }
 
 -(void) dismissModal:(NSString*)componentId completion:(RNNTransitionCompletionBlock)completion {
 	[self assertReady];
-	[_eventEmitter sendOnNavigationCommand:dismissModal params:@{@"componentId": componentId}];
+
 	[CATransaction begin];
 	[CATransaction setCompletionBlock:^{
+		[_eventEmitter sendOnNavigationCommandCompletion:dismissModal params:@{@"componentId": componentId}];
 		completion();
 	}];
 	
@@ -212,9 +235,10 @@ static NSString* const setDefaultOptions	= @"setDefaultOptions";
 
 -(void) dismissAllModalsWithCompletion:(RNNTransitionCompletionBlock)completion {
 	[self assertReady];
-	[_eventEmitter sendOnNavigationCommand:dismissAllModals params:@{}];
+
 	[CATransaction begin];
 	[CATransaction setCompletionBlock:^{
+		[_eventEmitter sendOnNavigationCommandCompletion:dismissAllModals params:@{}];
 		completion();
 	}];
 	
@@ -225,22 +249,30 @@ static NSString* const setDefaultOptions	= @"setDefaultOptions";
 
 -(void)showOverlay:(NSDictionary *)layout completion:(RNNTransitionCompletionBlock)completion {
 	[self assertReady];
-	[_eventEmitter sendOnNavigationCommand:showOverlay params:@{@"layout": layout}];
+
 	UIViewController<RNNRootViewProtocol>* overlayVC = [_controllerFactory createOverlay:layout];
 	[_overlayManager showOverlay:overlayVC completion:^{
+		[_eventEmitter sendOnNavigationCommandCompletion:showOverlay params:@{@"layout": layout}];
 		completion();
 	}];
 }
 
 - (void)dismissOverlay:(NSString*)componentId completion:(RNNTransitionCompletionBlock)completion {
 	[self assertReady];
-	[_eventEmitter sendOnNavigationCommand:dismissModal params:@{@"componentId": componentId}];
+
 	[_overlayManager dismissOverlay:componentId completion:^{
+		[_eventEmitter sendOnNavigationCommandCompletion:dismissModal params:@{@"componentId": componentId}];
 		completion();
 	}];
 }
 
 #pragma mark - private
+
+-(void)removePopedViewControllers:(NSArray*)viewControllers {
+	for (UIViewController *popedVC in viewControllers) {
+		[_store removeComponentByViewControllerInstance:popedVC];
+	}
+}
 
 -(void) assertReady {
 	if (!_store.isReadyToReceiveCommands) {

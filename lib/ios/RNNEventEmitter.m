@@ -1,4 +1,5 @@
 #import "RNNEventEmitter.h"
+#import "RNNUtils.h"
 
 @implementation RNNEventEmitter {
   NSInteger _appLaunchedListenerCount;
@@ -41,6 +42,10 @@ static NSString* const navigationEvent	= @"RNN.nativeEvent";
 
 -(void)sendOnNavigationCommand:(NSString *)commandName params:(NSDictionary*)params {
 	[self send:navigationEvent body:@{@"name":commandName , @"params": params}];
+}
+
+-(void)sendOnNavigationCommandCompletion:(NSString *)commandName params:(NSDictionary*)params {
+	[self send:commandComplete body:@{@"commandId":commandName , @"params": params, @"completionTime": [RNNUtils getCurrentTimestamp] }];
 }
 
 -(void)sendOnNavigationEvent:(NSString *)commandName params:(NSDictionary*)params {

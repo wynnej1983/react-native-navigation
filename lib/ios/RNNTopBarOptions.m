@@ -150,13 +150,25 @@ extern const NSInteger BLUR_TOPBAR_TAG;
 		_navigationButtons = [[RNNNavigationButtons alloc] initWithViewController:(RNNRootViewController*)viewController];
 		[_navigationButtons applyLeftButtons:self.leftButtons rightButtons:self.rightButtons];
 	}
-	
-	[self resetOptions];
-}
 
-- (void)resetOptions {
-	self.leftButtons = nil;
-	self.rightButtons = nil;
+	UIImage *image = self.backButtonImage ? [RCTConvert UIImage:self.backButtonImage] : nil;
+	[viewController.navigationController.navigationBar setBackIndicatorImage:image];
+	[viewController.navigationController.navigationBar setBackIndicatorTransitionMaskImage:image];
+	
+	if (self.hideBackButtonTitle) {
+		self.backButtonTitle = @"";
+	}
+	
+	if (self.backButtonTitle) {
+		UIBarButtonItem *backItem = [[UIBarButtonItem alloc] initWithTitle:self.backButtonTitle
+																	 style:UIBarButtonItemStylePlain
+																	target:nil
+																	action:nil];
+		
+		viewController.navigationItem.backBarButtonItem = backItem;
+	}
+	
+	viewController.navigationItem.hidesBackButton = [self.backButtonHidden boolValue];
 }
 
 -(void)storeOriginalTopBarImages:(UIViewController*)viewController {
