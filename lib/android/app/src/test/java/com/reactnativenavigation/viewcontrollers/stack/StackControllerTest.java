@@ -7,6 +7,7 @@ import android.view.View;
 import com.reactnativenavigation.BaseTest;
 import com.reactnativenavigation.TestUtils;
 import com.reactnativenavigation.anim.NavigationAnimator;
+import com.reactnativenavigation.mocks.ImageLoaderMock;
 import com.reactnativenavigation.mocks.SimpleViewController;
 import com.reactnativenavigation.mocks.TitleBarReactViewCreatorMock;
 import com.reactnativenavigation.mocks.TopBarBackgroundViewCreatorMock;
@@ -17,6 +18,7 @@ import com.reactnativenavigation.parse.params.Bool;
 import com.reactnativenavigation.parse.params.Button;
 import com.reactnativenavigation.parse.params.Text;
 import com.reactnativenavigation.utils.CommandListenerAdapter;
+import com.reactnativenavigation.utils.ImageLoader;
 import com.reactnativenavigation.utils.ViewHelper;
 import com.reactnativenavigation.viewcontrollers.ChildControllersRegistry;
 import com.reactnativenavigation.viewcontrollers.ParentController;
@@ -101,28 +103,34 @@ public class StackControllerTest extends BaseTest {
     public void push_backButtonIsAddedIfStackContainsMoreThenOneScreen() {
         uut.push(child1, new CommandListenerAdapter());
         verify(child1, times(0)).mergeOptions(any());
+        assertThat(child1.options.topBar.buttons.back.visible.isFalseOrUndefined()).isTrue();
 
         uut.push(child2, new CommandListenerAdapter());
         ArgumentCaptor<Options> captor = ArgumentCaptor.forClass(Options.class);
         verify(child2, times(1)).mergeOptions(captor.capture());
-        assertThat(captor.getValue().topBar.leftButtons).isNotNull();
-        assertThat(captor.getValue().topBar.leftButtons.get(0).id).isEqualTo("RNN.back");
+        assertThat(captor.getValue().topBar.buttons.back.visible.get()).isTrue();
     }
 
     @Test
-    public void push_backButtonIsNotAddedIfScreenContainsLeftButtons() {
+    public void push_backButtonIsNotAddedIfScreenContainsLeftButton() {
+        disablePushAnimation(child1, child2);
         uut.push(child1, new CommandListenerAdapter());
 
         Button leftButton = new Button();
         leftButton.id = "someButton";
-        child2.options.topBar.leftButtons = new ArrayList<>(Collections.singleton(leftButton));
+        leftButton.icon = new Text("icon.png");
+        child2.options.topBar.buttons.left = new ArrayList<>(Collections.singleton(leftButton));
+
         uut.push(child2, new CommandListenerAdapter());
-        verify(child2, times(0)).mergeOptions(any());
+        child2.onViewAppeared();
+        assertThat(topBarController.getView().getTitleBar().getNavigationIcon()).isNotNull();
+        verify(topBarController.getView(), times(1)).setLeftButtons(any());
+        verify(topBarController.getView(), times(0)).setBackButton(any());
     }
 
     @Test
     public void push_backButtonIsNotAddedIfScreenClearsLeftButton() {
-        child1.options.topBar.leftButtons = new ArrayList<>();
+        child1.options.topBar.buttons.left = new ArrayList<>();
         uut.push(child1, new CommandListenerAdapter());
         verify(child1, times(0)).mergeOptions(any());
     }
@@ -142,6 +150,7 @@ public class StackControllerTest extends BaseTest {
 
     @Test
     public void setRoot() {
+        disablePushAnimation(child1, child2);
         assertThat(uut.isEmpty()).isTrue();
         uut.push(child1, new CommandListenerAdapter());
         uut.push(child2, new CommandListenerAdapter());
@@ -753,12 +762,6 @@ public class StackControllerTest extends BaseTest {
         verify(topBarController, times(1)).clear();
     }
 
-    @Test
-    public void addBackButton_addedIfStackContainsMoreThenOneChild() {
-//        if (size() <= 1 || child.options.topBar.leftButtons != null) return;
-
-    }
-
     private void assertContainsOnlyId(String... ids) {
         assertThat(uut.size()).isEqualTo(ids.length);
         assertThat(uut.getChildControllers()).extracting((Extractor<ViewController, String>) ViewController::getId).containsOnly(ids);
@@ -781,8 +784,8 @@ public class StackControllerTest extends BaseTest {
     private void createTopBarController() {
         topBarController = spy(new TopBarController() {
             @Override
-            protected TopBar createTopBar(Context context, ReactViewCreator buttonCreator, TitleBarReactViewCreator titleBarReactViewCreator, TopBarBackgroundViewController topBarBackgroundViewController, TopBarButtonController.OnClickListener topBarButtonClickListener, StackLayout stackLayout) {
-                return spy(super.createTopBar(context, buttonCreator, titleBarReactViewCreator, topBarBackgroundViewController, topBarButtonClickListener, stackLayout));
+            protected TopBar createTopBar(Context context, ReactViewCreator buttonCreator, TitleBarReactViewCreator titleBarReactViewCreator, TopBarBackgroundViewController topBarBackgroundViewController, TopBarButtonController.OnClickListener topBarButtonClickListener, StackLayout stackLayout, ImageLoader imageLoader) {
+                return spy(super.createTopBar(context, buttonCreator, titleBarReactViewCreator, topBarBackgroundViewController, topBarButtonClickListener, stackLayout, ImageLoaderMock.mock()));
             }
         });
     }
