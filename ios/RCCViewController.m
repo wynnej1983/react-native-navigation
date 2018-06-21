@@ -449,7 +449,17 @@ const NSInteger TRANSPARENT_NAVBAR_TAG = 78264803;
         }
         [viewController setNeedsStatusBarAppearanceUpdate];
     }
-    
+
+    NSString *statusBarColor = self.navigatorStyle[@"statusBarColor"];
+    if (statusBarColor) {
+        UIColor *color = statusBarColor != (id)[NSNull null] ? [RCTConvert UIColor:statusBarColor] : nil;
+        UIView *statusBarView = [[UIApplication sharedApplication] valueForKey:@"statusBar"];
+        if (statusBarView != nil) {
+            statusBarView.backgroundColor = color;
+        }
+        [viewController setNeedsStatusBarAppearanceUpdate];
+    }
+
     NSNumber *tabBarHidden = self.navigatorStyle[@"tabBarHidden"];
     BOOL tabBarHiddenBool = tabBarHidden ? [tabBarHidden boolValue] : NO;
     if (tabBarHiddenBool) {
