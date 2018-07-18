@@ -1,5 +1,6 @@
 #import "RCCManager.h"
 #import "RCCViewController.h"
+#import "RCCCustomLaunchController.h"
 #import <React/RCTBridge.h>
 #import <React/RCTRedBox.h>
 #import <React/RCTConvert.h>
@@ -278,9 +279,20 @@
     return viewController;
 }
 
++ (RCCCustomLaunchController*)wrapSplashScreenController:(UIViewController *)splashController {
+    CGRect screenBounds = [UIScreen mainScreen].bounds;
+    RCCCustomLaunchController* customSplashController = [[RCCCustomLaunchController alloc] init];
+    customSplashController.view.frame = screenBounds;
+    splashController.view.frame = screenBounds;
+    [customSplashController addChildViewController:splashController];
+    [customSplashController.view addSubview:splashController.view];
+    [splashController didMoveToParentViewController:customSplashController];
+    return customSplashController;
+}
+
 + (void)showSplashScreenViewController:(UIViewController *)viewController {
     id<UIApplicationDelegate> appDelegate = [UIApplication sharedApplication].delegate;
-    appDelegate.window.rootViewController = viewController;
+    appDelegate.window.rootViewController = [self wrapSplashScreenController:viewController];
     [appDelegate.window makeKeyAndVisible];
 }
 

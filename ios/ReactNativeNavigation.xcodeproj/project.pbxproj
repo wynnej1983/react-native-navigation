@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		236A29E220FEF8BE00BF500F /* RCCCustomLaunchController.m in Sources */ = {isa = PBXBuildFile; fileRef = 236A29E020FEF8BD00BF500F /* RCCCustomLaunchController.m */; };
 		260804DB1CE0D9D20094DBA1 /* RCCToolBar.m in Sources */ = {isa = PBXBuildFile; fileRef = 260804DA1CE0D9D20094DBA1 /* RCCToolBar.m */; };
 		261108801E6C495400BF5D98 /* UIViewController+Rotation.m in Sources */ = {isa = PBXBuildFile; fileRef = 2611087F1E6C495400BF5D98 /* UIViewController+Rotation.m */; };
 		26714EAC1EB0E9D3009F4D52 /* RCCCustomTitleView.m in Sources */ = {isa = PBXBuildFile; fileRef = 26714EAB1EB0E9D3009F4D52 /* RCCCustomTitleView.m */; };
@@ -53,6 +54,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		236A29E020FEF8BD00BF500F /* RCCCustomLaunchController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RCCCustomLaunchController.m; sourceTree = "<group>"; };
+		236A29E120FEF8BD00BF500F /* RCCCustomLaunchController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RCCCustomLaunchController.h; sourceTree = "<group>"; };
 		260804D91CE0D9D20094DBA1 /* RCCToolBar.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RCCToolBar.h; sourceTree = "<group>"; };
 		260804DA1CE0D9D20094DBA1 /* RCCToolBar.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RCCToolBar.m; sourceTree = "<group>"; };
 		2611087E1E6C495400BF5D98 /* UIViewController+Rotation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "UIViewController+Rotation.h"; path = "../UIViewController+Rotation.h"; sourceTree = "<group>"; };
@@ -208,6 +211,8 @@
 		D8AFADB41BEE6F3F00A4592D = {
 			isa = PBXGroup;
 			children = (
+				236A29E120FEF8BD00BF500F /* RCCCustomLaunchController.h */,
+				236A29E020FEF8BD00BF500F /* RCCCustomLaunchController.m */,
 				D8D779951D04B7180050CFEA /* Helpers */,
 				260804D51CE0D7090094DBA1 /* RCCToolBar */,
 				D85082BB1CBCF42400FDB961 /* RCCDrawerController */,
@@ -324,6 +329,7 @@
 				390AD487200F566100A8250D /* RNNSwizzles.m in Sources */,
 				26AFF3F51D7EEE2400CBA211 /* RCCTitleViewHelper.m in Sources */,
 				D8D779981D04B7180050CFEA /* RCTHelpers.m in Sources */,
+				236A29E220FEF8BE00BF500F /* RCCCustomLaunchController.m in Sources */,
 				D85082E81CBCF54200FDB961 /* SidebarLuvocracyAnimation.m in Sources */,
 				D85082E31CBCF54200FDB961 /* SidebarAirbnbAnimation.m in Sources */,
 				D84813191C8C5EB700051BAF /* RCCLightBox.m in Sources */,
